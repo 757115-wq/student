@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 【修正版・注釈】
-主な修正は JavaScript 内の【修正1】～【修正11】です。
+主な修正は JavaScript 内の【修正１】～【修正１１】です。
 ・停止判定の誤検出対策
 ・GPS/加速度データ未取得時に停止と誤認しない対策
 ・同じ標識を見続けたときの警告の繰り返し防止
@@ -10,7 +10,7 @@
 <html lang="ja">
 <center>
 <div id="main-screen"></div>
-<h1 id="school-title" class="title-text">留萌高校　電気・建築科</h1>
+<h1 id="school-title" class="title-text">留萌高校電気建築科</h1>
 <button id="help-button" onclick="showhelp()">ヘルプ</button>
 
 <div id="title-text">
@@ -252,8 +252,6 @@
   padding: 16px;
   box-sizing: border-box;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
   text-align: left;
   font-size: 16px;
 }
@@ -265,15 +263,12 @@
   background: #fff;
   color: #172033;
   border-radius: 18px;
-  overflow: visible;
+  overflow: hidden;
   box-shadow: 0 18px 55px rgba(0,0,0,.35);
   text-align: left;
   font-size: 16px;
 }
 #help-header {
-  position: sticky;
-  top: 0;
-  z-index: 5;
   background: linear-gradient(110deg, #087fe5, #24b7ed);
   color: white;
   padding: 18px 22px;
@@ -281,39 +276,35 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-radius: 18px 18px 0 0;
 }
 #help-header h2 { margin: 0; font-size: clamp(22px, 4vw, 30px); line-height: 1.3; }
 #help-header p { margin: 5px 0 0; font-size: 14px; color: white; }
 #help-close {
   flex: 0 0 auto;
   border: 0;
-  border-radius: 12px;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
   padding: 0;
   background: white;
   color: #087fe5;
-  font-size: 30px;
+  font-size: 26px;
   font-weight: bold;
   cursor: pointer;
-  touch-action: manipulation;
 }
 #help-content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: 14px;
   padding: 16px;
 }
-.help-column { display: contents; }
+.help-column { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .help-card {
   border: 1px solid #d8e4f2;
   border-radius: 13px;
   overflow: hidden;
   background: #fff;
   color: #172033;
-  min-width: 0;
 }
 .help-card h3 {
   margin: 0;
@@ -323,7 +314,7 @@
   background: #eef6ff;
   color: #0757a5;
 }
-.help-card .help-body { padding: 12px 14px; font-size: 16px; line-height: 1.65; }
+.help-card .help-body { padding: 12px 14px; font-size: 15px; line-height: 1.65; }
 .help-card p { margin: 0 0 8px; }
 .help-card p:last-child { margin-bottom: 0; }
 .help-steps { margin: 0; padding-left: 1.4em; }
@@ -334,8 +325,8 @@
   border-radius: 999px;
   padding: 3px 9px;
   font-weight: bold;
-  white-space: normal;
-  font-size: 14px;
+  white-space: nowrap;
+  font-size: 13px;
   margin-right: 4px;
 }
 .help-blue { background: #e3f2ff; color: #0757a5; }
@@ -348,28 +339,22 @@
 .help-icon { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 20px; background: #f0f4f8; }
 .help-warning { background: #fff8e8; border-color: #ffe0a0; }
 .help-warning h3 { background: #fff0ce; color: #8b5200; }
-.help-flow { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 6px; align-items: stretch; margin-top: 8px; }
-.help-flow span { display: block; border-radius: 8px; background: #edf5ff; color: #0757a5; padding: 10px 12px; font-weight: bold; font-size: 16px; text-align: center; }
-.help-flow b { color: #64748b; text-align: center; line-height: 1; }
-#help-footer { display: none; }
+.help-flow { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin-top: 8px; }
+.help-flow span { border-radius: 8px; background: #edf5ff; color: #0757a5; padding: 7px 9px; font-weight: bold; font-size: 13px; }
+.help-flow b { color: #64748b; }
+#help-footer { padding: 0 16px 16px; display: flex; justify-content: flex-end; }
 #help-footer button {
   background: #087fe5; color: white; border: 0; border-radius: 10px;
-  padding: 12px 22px; font-size: 18px; min-height: 48px; cursor: pointer;
-  touch-action: manipulation;
+  padding: 10px 22px; font-size: 16px; cursor: pointer;
 }
 @media (max-width: 700px) {
-  #help-overlay { padding: 0; align-items: stretch; }
-  #help-panel { width: 100%; margin: 0; border-radius: 0; box-shadow: none; }
-  #help-header { padding: 12px 14px; border-radius: 0; }
-  #help-header h2 { font-size: 22px; }
-  #help-header p { font-size: 16px; }
-  #help-close { width: 50px; height: 50px; min-width: 50px; font-size: 30px; }
+  #help-overlay { padding: 8px; }
+  #help-header { padding: 14px; }
   #help-content { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
-  .help-column { display: contents; }
-  .help-card h3 { font-size: 18px; padding: 12px; }
-  .help-card .help-body { font-size: 16px; padding: 12px; line-height: 1.7; }
-  .help-pill { font-size: 14px; }
-  .help-flow span { font-size: 16px; padding: 11px 12px; }
+  .help-column { gap: 10px; }
+  .help-card h3 { font-size: 17px; }
+  .help-card .help-body { font-size: 14px; padding: 10px 12px; }
+  #help-footer { padding: 0 10px 12px; }
 }
 
   </style>
@@ -530,7 +515,7 @@ const d = new Date(document.lastModified);
 
     function speakAlert(text) {
     if (!window.speechSynthesis) return;
-    //【修正⑨】前の音声が残っている場合はキャンセルして、音声の連続再生を防ぐ
+    //【修正９】前の音声が残っている場合はキャンセルして、音声の連続再生を防ぐ
     window.speechSynthesis.cancel();
     const uttr = new SpeechSynthesisUtterance(text);
     uttr.lang = "ja-JP";
@@ -547,9 +532,9 @@ const d = new Date(document.lastModified);
     let model, webcam, labelContainer, maxPredictions;
     let speedKmh = 0;
     let currentStatus = "準備中"; //【修正⑪】状態表示用の変数を明示的に宣言
-    //【修正②】GPSの速度を一度でも正常取得できたか。未取得の0 km/hを停止扱いしない
+    //【修正２】GPSの速度を一度でも正常取得できたか。未取得の0 km/hを停止扱いしない
     let gpsSpeedAvailable = false;
-    //【修正②】加速度センサーから有効な値を取得できているか
+    //【修正２】加速度センサーから有効な値を取得できているか
     let motionAvailable = false;
     let stopConfidenceCount = 0;
     let stopStartTime = null;
@@ -569,7 +554,7 @@ const d = new Date(document.lastModified);
     // Load the image model and setup the webcam
    async function init() {
    try {
-   //【修正③】モデル読み込み・カメラ起動に失敗した場合は、下の catch で案内する
+   //【修正３】モデル読み込み・カメラ起動に失敗した場合は、下の catch で案内する
    // 高校名を非表示
 document.getElementById("school-title").style.display = "none";
 
@@ -713,7 +698,7 @@ if (navigator.geolocation) {
 }
 
 function success(position) {
-    //【修正④】GPS速度が null のときは、0 km/h とみなさない
+    //【修正４】GPS速度が null のときは、0 km/h とみなさない
     if (position.coords.speed != null && Number.isFinite(position.coords.speed)) {
         speedKmh = position.coords.speed * 3.6;
         gpsSpeedAvailable = true;
@@ -728,7 +713,7 @@ setInterval(() => {
 
 
     function error(err) {
-      //【修正⑩】GPSが使えない場合はコンソールに理由を記録
+      //【修正１０】GPSが使えない場合はコンソールに理由を記録
       console.warn(`GPS ERROR(${err.code}): ${err.message}`);
       gpsSpeedAvailable = false;
       document.getElementById("speed").textContent = "--";
@@ -783,7 +768,7 @@ setInterval(() => {
     }
 
 function handleMotion(event) {
-    //【修正⑤】端末によって event.acceleration が null になることがある。
+    //【修正５】端末によって event.acceleration が null になることがある。
     // その場合に 0 を代入すると「揺れがない＝停止」と誤判定するため、判定を保留する。
     const acc = event.acceleration;
     const validAcceleration = acc &&
@@ -817,7 +802,7 @@ function handleMotion(event) {
     // --------------------------------
     // 停止しているか判定
     // --------------------------------
-    //【修正⑥】「GPS速度が低い」または「揺れが小さい」の片方だけでは
+    //【修正６】「GPS速度が低い」または「揺れが小さい」の片方だけでは
     // 停止と判断しない。両センサーが有効で、両方の条件を満たした場合のみ停止扱い。
     // センサーが未取得なら false とし、停止・一時停止完了を誤って表示しない。
     const canJudgeStop = gpsSpeedAvailable && motionAvailable;
@@ -865,7 +850,7 @@ function handleMotion(event) {
 
             hasSpokenNoStop = true;
 
-            //【修正⑦】この標識の判定を終了し、同じ標識を見続けても警告を繰り返さない
+            //【修正７】この標識の判定を終了し、同じ標識を見続けても警告を繰り返さない
             stopCycleLocked = true;
             stopSignDetected = false;
             stopDetectedTime = null;
