@@ -57,7 +57,7 @@
     <div id="stop-status" class="highlight">準備中</div>
 
 </div>
-<div id="warning-message">🚨止まれ🚨</div>
+<div id="debug-status" style="font-size:12px;text-align:center;padding:6px;">速度: 未取得 ／ 走行履歴: なし ／ 判定: 待機</div><div id="warning-message">🚨止まれ🚨</div>
 <div id="last-update">
     Last Updated：<span id="lastModified"></span>
 </div>
@@ -527,10 +527,13 @@ const d = new Date(document.lastModified);
     // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
 
     // the link to your model provided by Teachable Machine export panel
-    const URL = "https://teachablemachine.withgoogle.com/models/amJFUefti/";
+    const URL = "https://teachablemachine.withgoogle.com/models/SmxealUgK/";
 
     let model, webcam, labelContainer, maxPredictions;
-    let speedKmh = 0;
+    let speedKmh = NaN;
+    let lastGpsFix = null, lastGpsUpdate = 0, gpsSource = "未取得";
+    let observedMoving = false;
+    const GPS_STALE_MS = 6000;
     let currentStatus = "準備中"; //【修正⑪】状態表示用の変数を明示的に宣言
     //【修正２】GPSの速度を一度でも正常取得できたか。未取得の0 km/hを停止扱いしない
     let gpsSpeedAvailable = false;
@@ -539,9 +542,9 @@ const d = new Date(document.lastModified);
     let stopConfidenceCount = 0;
     let stopStartTime = null;
     let statusHoldUntil = 0; // 判定結果の表示を維持する時刻
-    const STOP_SPEED = 1.0;
-    const STOP_ACCEL = 0.1;
-    const STOP_TIME = 1000; //【修正①】停止が1秒続いたら一時停止完了（単位はミリ秒）
+    const STOP_SPEED = 1.5;
+    const STOP_ACCEL = 0.15;
+    const STOP_TIME = 2000; //【修正①】停止が1.5秒続いたら一時停止完了（単位はミリ秒）
 
     // 一時不停止判定用
     let stopDetectedTime = null;
@@ -605,7 +608,7 @@ async function loop() {
 
     frameCount++;
 
-    if (frameCount % 10 === 0) {
+    if (frameCount % 5 === 0) {
         await predict();
     }
 
@@ -632,7 +635,7 @@ async function loop() {
             document.getElementById("confidence").textContent =
             (probability * 100).toFixed(1) + "%";
 
-            if (probability > 0.70) {
+            if (probability > 0.60) {
                 stopConfidenceCount++;
             } else {
             stopConfidenceCount = 0;
@@ -651,7 +654,7 @@ if (isStopDetected) {
     document.getElementById("warning-message").style.display = "block";
 
     // 判定がロックされていなければ処理する
-    if (!stopCycleLocked) {
+    if (!stopCycleLocked && !stopSignDetected && observedMoving) {
 
         stopSignDetected = true;
 
@@ -677,7 +680,7 @@ if (isStopDetected) {
     noStopFrameCount++;
 
     // 3回連続で認識されなければ次の判定を許可
-    if (noStopFrameCount >= 3) {
+    if (noStopFrameCount >= 8) {
         stopCycleLocked = false;
         noStopFrameCount = 0;
     }
@@ -697,28 +700,45 @@ if (navigator.geolocation) {
     alert("このブラウザはGPSに対応していません。");
 }
 
-function success(position) {
-    //【修正４】GPS速度が null のときは、0 km/h とみなさない
-    if (position.coords.speed != null && Number.isFinite(position.coords.speed)) {
-        speedKmh = position.coords.speed * 3.6;
-        gpsSpeedAvailable = true;
-    }
+function distanceMeters(a,b,c,d) {
+ const r=Math.PI/180;
+ const x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;
+ return 6371000*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
-
-// 速度表示だけを0.05秒ごとに更新
-setInterval(() => {
-    document.getElementById("speed").textContent =
-        speedKmh.toFixed(1);
-}, 50);
-
-
-    function error(err) {
-      //【修正１０】GPSが使えない場合はコンソールに理由を記録
-      console.warn(`GPS ERROR(${err.code}): ${err.message}`);
-      gpsSpeedAvailable = false;
-      document.getElementById("speed").textContent = "--";
-    }
- let lastSpokenTime = 0;
+function success(position) {
+ const c=position.coords, t=position.timestamp||Date.now();
+ const accurate=Number.isFinite(c.accuracy)&&c.accuracy<=40;
+ let v=NaN, source="未取得";
+ if(Number.isFinite(c.speed)&&c.speed>=0) {
+   v=c.speed*3.6; source="GPS直接";
+ } else if(accurate&&lastGpsFix&&lastGpsFix.accurate) {
+   const dt=(t-lastGpsFix.time)/1000;
+   if(dt>=1&&dt<=15) {
+     v=Math.min(60,distanceMeters(lastGpsFix.lat,lastGpsFix.lon,c.latitude,c.longitude)/dt*3.6);
+     source="位置差分(推定)";
+   }
+ }
+ lastGpsFix={lat:c.latitude,lon:c.longitude,time:t,accurate};
+ if(Number.isFinite(v)) {
+   speedKmh=v; gpsSpeedAvailable=true; lastGpsUpdate=Date.now(); gpsSource=source;
+   if(v>=3) observedMoving=true;
+ } else {
+   gpsSpeedAvailable=false; gpsSource=accurate?"速度計算待ち":"位置精度不足";
+ }
+}
+setInterval(()=>{
+ const fresh=gpsSpeedAvailable&&Date.now()-lastGpsUpdate<=GPS_STALE_MS;
+ document.getElementById("speed").textContent=fresh?speedKmh.toFixed(1):"--";
+ document.getElementById("debug-status").textContent=
+ "速度: "+(fresh?gpsSource:"未取得/更新待ち")+
+ " ／ 走行履歴: "+(observedMoving?"あり":"なし")+
+ " ／ 判定: "+(stopSignDetected?"進行中":stopCycleLocked?"終了":"待機");
+},250);
+function error(err) {
+ console.warn("GPS ERROR",err.code,err.message);
+ gpsSpeedAvailable=false;
+}
+let lastSpokenTime = 0;
 
     // 直近1秒分の揺れを保存する配列
     let recentValues = [];
@@ -805,7 +825,7 @@ function handleMotion(event) {
     //【修正６】「GPS速度が低い」または「揺れが小さい」の片方だけでは
     // 停止と判断しない。両センサーが有効で、両方の条件を満たした場合のみ停止扱い。
     // センサーが未取得なら false とし、停止・一時停止完了を誤って表示しない。
-    const canJudgeStop = gpsSpeedAvailable && motionAvailable;
+    const canJudgeStop = gpsSpeedAvailable && motionAvailable && now-lastGpsUpdate<=GPS_STALE_MS;
     const isStill = canJudgeStop &&
         (speedKmh <= STOP_SPEED) &&
         (total <= STOP_ACCEL);
@@ -854,6 +874,7 @@ function handleMotion(event) {
             stopCycleLocked = true;
             stopSignDetected = false;
             stopDetectedTime = null;
+            observedMoving = false;
 
             // 次の標識は、AIが3回連続で見失った後に再判定できる
             hasPlayed = false;
@@ -901,6 +922,7 @@ function handleMotion(event) {
                 stopCycleLocked = true;
                 stopSignDetected = false;
                 stopDetectedTime = null;
+                observedMoving = false;
 
                 // 次の標識に備える
                 hasPlayed = false;
